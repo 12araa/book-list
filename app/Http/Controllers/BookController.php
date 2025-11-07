@@ -14,8 +14,10 @@ class BookController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Book::query();
+        // Mulai query dengan trending calculation
+        $query = Book::withTrending();
 
+        // 1. LOGIKA SEARCH
         $query->when($request->filled('search'), function ($q) use ($request) {
             $search = $request->input('search');
 
@@ -53,7 +55,7 @@ class BookController extends Controller
             $q->where('avg_rating', '<=', $request->max_rating);
         });
 
-        // Filter by Publication Year Range (BARU)
+        // Filter by Publication Year Range
         $query->when($request->filled('min_year'), function ($q) use ($request) {
             $q->where('publication_year', '>=', $request->min_year);
         });
@@ -97,45 +99,6 @@ class BookController extends Controller
                       ->simplePaginate(50)
                       ->appends($request->query());
 
-
-        // 5. TRENDING
-        // $now   = now();
-        // $last7 = $now->clone()->subDays(7);
-        // $prev7 = $now->clone()->subDays(14);
-
-        // // get all book_ids in this page
-        // $bookIds = collect($books->items())->pluck('id')->toArray();
-
-        // // get count votes last 7 days
-        // $recentVotes = DB::table('ratings')
-        //     ->select('book_id', DB::raw('COUNT(*) as cnt'))
-        //     ->where('created_at', '>=', $last7)
-        //     ->groupBy('book_id');
-
-        // // 3. Buat query untuk menghitung vote MINGGU LALU
-        // $previousVotes = DB::table('ratings')
-        //     ->select('book_id', DB::raw('COUNT(*) as cnt'))
-        //     ->whereBetween('created_at', [$prev7, $last7])
-        //     ->groupBy('book_id');
-
-        // // 4. Gabungkan semua dalam SATU UPDATE QUERY
-        // DB::table('books')
-        //     ->leftJoinSub($recentVotes, 'recent', function ($join) {
-        //         $join->on('books.id', '=', 'recent.book_id');
-        //     })
-        //     ->leftJoinSub($previousVotes, 'previous', function ($join) {
-        //         $join->on('books.id', '=', 'previous.book_id');
-        //     })
-        //     ->update([
-        //         // COALESCE() untuk mengubah NULL (jika tidak ada vote) menjadi 0
-        //         'rating_trend_flag' => DB::raw('CASE WHEN COALESCE(recent.cnt, 0) > COALESCE(previous.cnt, 0) THEN 1 ELSE 0 END')
-        //     ]);
-
-        // $this->info('Trending flags updated successfully!');
-
-
-
-
         // PERSIAPAN DATA UNTUK VIEW
         $authors = Author::orderBy('name')->get();
 
@@ -149,14 +112,6 @@ class BookController extends Controller
         $selectedAuthor = null;
         if ($request->filled('author_id')) {
             $selectedAuthor = Author::select('id', 'name')->find($request->author_id);
-        }
-
-        $selectedCategoryIds = $request->input('categories', []);
-        $selectedCategories = [];
-        if (!empty($selectedCategoryIds)) {
-            $selectedCategories = Category::whereIn('id', $selectedCategoryIds)
-                                        ->select('id', 'name')
-                                        ->get();
         }
 
         return view('books.index', compact(

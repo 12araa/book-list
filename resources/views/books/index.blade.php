@@ -49,11 +49,11 @@
                                     Rate
                                 </a>
                             </td>
-                            <td>
-                                @if($b->rating_trend_flag == 1)
-                                    <span class="text-success" title="Trending Up">↑</span>
+                            <td class="text-center">
+                                @if($b->is_trending)
+                                    <span class="text-success fw-bold fs-5" title="Trending Up - Rating improved in last 7 days">↑</span>
                                 @else
-                                    <span class="text-muted" title="Stable">−</span>
+                                    <span class="text-muted" title="Stable or Declining">−</span>
                                 @endif
                             </td>
                             <td>
@@ -78,4 +78,3 @@
         {{ $books->links() }}
     </div>
 @endsection
-
